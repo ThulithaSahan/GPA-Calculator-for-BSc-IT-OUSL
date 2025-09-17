@@ -20,37 +20,49 @@ def get_gpv(marks):
 # Ignore these subjects
 ignore_list = ["ADE3430","COE3200","FDE3030","LTE3413"]
 
-st.title("📊 GPA Calculator")
+st.title("📊 GPA Calculator for BSc IT (OUSL)")
 
 uploaded_file = st.file_uploader("Upload your Marks Sheet (Excel)", type=["xlsx"])
 
 if uploaded_file:
     df = pd.read_excel(uploaded_file)
 
-    # Filter out non-GPA subjects
-    df = df[~df['CourseCode'].isin(ignore_list)]
+    # Normalize column names (lowercase, no spaces)
+    df.columns = df.columns.str.strip().str.replace(" ", "").str.lower()
 
-    total_points, total_credits = 0, 0
-    results = []
+    st.write("✅ Columns detected:", df.columns.tolist())
 
-    for _, row in df.iterrows():
-        code = row['CourseCode']
-        marks = row['Marks']
-        credits = int(code[1])   # 2nd digit = credits
-        gpv = get_gpv(marks)
+    # Try to detect course code and marks columns
+    if "coursecode" not in df.columns or "marks" not in df.columns:
+        st.error("❌ Could not find required columns. Please make sure your Excel has 'Course Code' and 'Marks'.")
+    else:
+        # Filter out non-GPA subjects
+        df = df[~df['coursecode'].isin(ignore_list)]
 
-        total_points += gpv * credits
-        total_credits += credits
-        results.append([code, marks, credits, gpv])
+        total_points, total_credits = 0, 0
+        results = []
 
-    gpa = round(total_points / total_credits, 2) if total_credits > 0 else 0
+        for _, row in df.iterrows():
+            code = str(row['coursecode'])
+            marks = row['marks']
+            try:
+                credits = int(code[1])   # 2nd digit = credits
+            except:
+                credits = 0  # fallback if code is weird
 
-    result_df = pd.DataFrame(results, columns=["CourseCode", "Marks", "Credits", "GPV"])
-    st.dataframe(result_df)
-    st.success(f"🎓 Your GPA is: **{gpa}**")
+            gpv = get_gpv(marks)
 
-    # Save to SQLite database
-    conn = sqlite3.connect("marks.db")
-    result_df.to_sql("marks", conn, if_exists="replace", index=False)
-    conn.close()
+            total_points += gpv * credits
+            total_credits += credits
+            results.append([code, marks, credits, gpv])
 
+        gpa = round(total_points / total_credits, 2) if total_credits > 0 else 0
+
+        result_df = pd.DataFrame(results, columns=["CourseCode", "Marks", "Credits", "GPV"])
+        st.dataframe(result_df)
+        st.success(f"🎓 Your GPA is: **{gpa}**")
+
+        # Save results to SQLite
+        conn = sqlite3.connect("marks.db")
+        result_df.to_sql("marks", conn, if_exists="replace", index=False)
+        conn.close()
