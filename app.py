@@ -21,7 +21,7 @@ def get_gpv(marks):
 ignore_list = ["ADE3430","COE3200","FDE3030","LTE3413"]
 
 st.title("📊 GPA Calculator for BSc IT (OUSL)")
-
+st.write("Download your marks sheet as an Excel file from Myousl and upload it here")
 uploaded_file = st.file_uploader("Upload your Marks Sheet (Excel)", type=["xlsx"])
 
 if uploaded_file:
