@@ -27,7 +27,7 @@ def extract_credits(code):
     return 0
 
 st.title("🎓 GPA Calculator - OUSL BSc IT")
-st.write("Download your results from Myousl and upload here")
+st.write("Download your results from Myousl as an Excel file and upload here")
 
 uploaded_file = st.file_uploader("Upload your marks Excel file", type=["xlsx"])
 
